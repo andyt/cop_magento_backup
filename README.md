@@ -8,10 +8,10 @@ Prerequisites
 
 This requires ruby and rubygems, first and foremost.  If you don't have those installed already, you'll want to download and insall them:
 
-* [http://www.ruby-lang.org/en/](Ruby)
-* [https://rubygems.org/pages/download](RubyGems)
+* [Ruby](http://www.ruby-lang.org/en/)
+* [RubyGems](https://rubygems.org/pages/download)
 
-This also requires the Amazon S3 ruby gem to be present.  Assuming you're using [http://beginrescueend.com/](RVM) and [http://gembundler.com/](Bundler), do this:
+This also requires the Amazon S3 ruby gem to be present.  Assuming you're using [RVM](http://beginrescueend.com/) and [Bunler](http://gembundler.com/), do this:
 
 		$ gem install bundler
 		$ bundle install
