@@ -6,10 +6,14 @@ This is a COPIOUS script to backup a Magento instance.  It pulls uploaded media 
 Prerequisites
 -------------
 
-This requires ruby and rubygems, first and foremost.  If you don't have those installed already, you'll want to download and insall them:
+This requires ruby and rubygems, first and foremost.  If you don't have those installed already, you'll want to download and install them:
 
 * [Ruby](http://www.ruby-lang.org/en/)
 * [RubyGems](https://rubygems.org/pages/download)
+
+Ruby will need the OpenSSL libraries. If you haven’t installed them, do this (Ubuntu):
+
+    $ sudo apt-get install libopenssl-ruby
 
 This also requires the Amazon S3 ruby gem to be present.  Assuming you're using [RVM](http://beginrescueend.com/) and [Bunler](http://gembundler.com/), do this:
 
