@@ -61,7 +61,7 @@ else
 	print "   - backing up uploaded assets... " 
 	asset_backup_command = "/usr/bin/scp -r \"#{web_ssh_root}:#{config['webserver']['media_path']}/*\" \"#{backup_name}/assets/\" > #{backup_name}/backup.log 2>&1"
 	unless system(asset_backup_command)
-		puts "Couldn't download assets from #{web_ssh_root}:#{config['webserver']['media_path']} to {backup_name}/assets/.   Details in #{backup_name}/backup.log."
+		puts "Couldn't download assets from #{web_ssh_root}:#{config['webserver']['media_path']} to #{backup_name}/assets/.   Details in #{backup_name}/backup.log."
 		exit 1
 	end
 	puts "done."
