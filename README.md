@@ -15,7 +15,7 @@ Ruby will need the OpenSSL libraries. If you haven’t installed them, do this (
 
     $ sudo apt-get install libopenssl-ruby
 
-This also requires the Amazon S3 ruby gem to be present.  Assuming you're using [RVM](http://beginrescueend.com/) and [Bunler](http://gembundler.com/), do this:
+This also requires the Amazon S3 ruby gem to be present.  Assuming you're using [RVM](http://beginrescueend.com/) and [Bundler](http://gembundler.com/), do this:
 
 		$ gem install bundler
 		$ bundle install
