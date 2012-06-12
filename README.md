@@ -61,3 +61,10 @@ It should produce output roughly equivalent to this:
 		   - uploading to amazon cloud... done.
 		   - removing local copy of the backup... done.
 		done.
+
+License
+-------
+
+This software is available under the Academic Free License, version 3.0:
+
+http://www.opensource.org/licenses/afl-3.0.php

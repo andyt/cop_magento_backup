@@ -6,19 +6,15 @@
 #
 # http://github.com/copious/magento_backup
 #
-# Copyright (c) 2011 by Copious
-# All Rights Reserved
+# Copyright (c) 2011-2012 by Copious
+#
+# This software is available under the Academic Free License, version 3.0:
+# http://www.opensource.org/licenses/afl-3.0.php
 ###
 
 require 'yaml'
 require 'rubygems'
 require 'aws/s3'
-
-### This backup script has a soundtrack:
-#
-# https://www.youtube.com/watch?v=pDcPBGESkAI
-#
-###
 
 ### Read the YAML configuration file
 unless File.exists?('magento_backup.yml')
@@ -52,8 +48,8 @@ end
 
 STDOUT.sync = true
 
-if File.exists?("#{backup_name}.tgz")
-	puts "   - #{backup_name}.tgz already exists.  Skipping archive generation."
+if File.exists?("#{backup_name}.tgz.00")
+	puts "   - #{backup_name}.tgz.00 already exists.  Skipping archive generation."
 
 else
 
@@ -81,7 +77,7 @@ else
 	print "   - backing up database... "
 	escaped_password = config['database']['password']
 	escaped_password.gsub!('!','\\!')
-	escaped_password.gsub!('$','\\\\\\\\\\$')  ### Yo dawg, I heard you like interpolation.
+	escaped_password.gsub!('$','\\\\\\\\\\$')
 	database_backup_command = "/usr/bin/ssh \"#{db_ssh_root}\" \"/usr/bin/mysqldump -u #{config['database']['db_username']} --password=#{escaped_password} #{config['database']['database']}\" > #{backup_name}/database/#{config['database']['database']}.sql 2>#{backup_name}/backup.log"
 	unless system(database_backup_command)
 		puts "Couldn't make a backup of the current database.  Details in #{backup_name}/backup.log."
@@ -115,12 +111,27 @@ else
 	end
 	puts "done."
 
+
+	### Partition the backups into files that won't break AMZN S3
+	print "   - splitting backups... "
+	split_backups_command = "/usr/bin/split -b 1024M -d #{backup_name}.tgz #{backup_name}.tgz."
+	if system(split_backups_command)
+		unless system("rm -rf #{backup_name}.tgz")
+			puts "Couldn't remove unpartitioned data.  Exiting."
+			exit 1
+		end
+	else
+		puts "Couldn't partition the backup in #{backup_name}.  Exiting."
+		exit 1
+	end
+	puts "done."
+
 end
 
 ### Upload the backup file to Amazon S3
 print "   - uploading to amazon cloud... "
 AWS::S3::Base.establish_connection!(
-	:persistent        => false,
+    :persistent        => false,
     :access_key_id     => config['amazon']['access_key_id'],
     :secret_access_key => config['amazon']['secret_access_key']
 )
@@ -130,6 +141,7 @@ unless backups_bucket
 	backups_bucket = AWS::S3::Bucket.find(config['amazon']['bucket'])
 end
 begin
+
 	AWS::S3::S3Object.find("#{backup_name}.tgz", config['amazon']['bucket'])
 	### If this succeeds, the backup already exists.
 
