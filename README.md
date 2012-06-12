@@ -27,7 +27,7 @@ If you're not using those tools, have sudo access and do this:
 Back it up.
 -----------
 
-To use it, drop your authentication vectors into a magento_backup.yml file to look a little something like this:
+To use it, drop your authentication vectors into a `magento_backup.yml` file to look like this:
 
 		site_name: your_app_name
 		database:
@@ -52,7 +52,7 @@ Once that's in place, simply run the script:
 
 It should produce output roughly equivalent to this:
 
-		Creating backup sportswave_backup_2011-10-27...
+		Creating backup magento_backup_2011-10-27...
 		   - backing up uploaded assets... done.
 		   - putting up maintenance notice... done.
 		   - backing up database... done.
@@ -61,6 +61,19 @@ It should produce output roughly equivalent to this:
 		   - uploading to amazon cloud... done.
 		   - removing local copy of the backup... done.
 		done.
+
+Restoring
+---------
+
+To restore from a backup, you'll first need to pull all of the partitioned backup files back down from Amazon S3 using their web client at http://aws.amazon.com/.  Once you have a local copy of these, you'll need to reassemble them into a tgz file:
+
+		$ cat magento_backup_2011-10-27.tgz.xaa magento_backup_2011-10-27.tgz.xab ... > magento_backup.tgz
+
+Then you'll need to extract the archive using tar and gzip:
+
+	  $ tar zxvf magento_backup.tgz
+
+This will create a directory containing the assets, code, and database dump of the backup Magento data.
 
 License
 -------
