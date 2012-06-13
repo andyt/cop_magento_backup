@@ -13,7 +13,7 @@ This requires ruby and rubygems, first and foremost.  If you don't have those in
 
 Ruby will need the OpenSSL libraries. If you haven’t installed them, do this (Ubuntu):
 
-    $ sudo apt-get install libopenssl-ruby
+		$ sudo apt-get install libopenssl-ruby
 
 This also requires the Amazon S3 ruby gem to be present.  Assuming you're using [RVM](http://beginrescueend.com/) and [Bundler](http://gembundler.com/), do this:
 
@@ -46,7 +46,7 @@ To use it, drop your authentication vectors into a `magento_backup.yml` file to 
 		    app_root: /var/www/your_app-staging
 		    media_path: /var/www/your_app-staging/media
 
-Once that's in place, simply run the script:
+Once that's in place, run the script:
 
 		$ ./magento_backup.rb
 
@@ -58,6 +58,7 @@ It should produce output roughly equivalent to this:
 		   - backing up database... done.
 		   - removing maintenance notice... done.
 		   - compressing backup... done.
+		   - splitting backups... done.
 		   - uploading to amazon cloud... done.
 		   - removing local copy of the backup... done.
 		done.
