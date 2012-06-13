@@ -19,7 +19,6 @@ require 'yaml'
 require 'rubygems'
 require 'aws/s3'
 require 'optparse'
-require 'pry'
 
 options = {
 	:cleanup => true,
