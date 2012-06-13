@@ -16,6 +16,7 @@ require 'bundler'
 Bundler.setup()
 
 require 'yaml'
+require 'openssl'
 require 'rubygems'
 require 'aws/s3'
 require 'optparse'
@@ -55,6 +56,7 @@ backup_name = "#{config['site_name']}_backup_#{Time.now.year}-#{Time.now.month}-
 
 tar_command = `which tar`.strip
 ssh_command = `which ssh`.strip
+nice_command = `which nice`.strip
 rsync_command = `which rsync`.strip
 split_command = `which split`.strip
 
@@ -124,7 +126,7 @@ else
 
 	### Tar those backups together
 	print "   - compressing backup... "
-	compress_backup_command = "#{tar_command} zcf #{backup_name}.tgz #{backup_name}/*"
+	compress_backup_command = "#{nice_command} #{tar_command} zcf #{backup_name}.tgz #{backup_name}/*"
 	if system(compress_backup_command)
 		if(options[:cleanup])
 			unless system("rm -rf #{backup_name}")
