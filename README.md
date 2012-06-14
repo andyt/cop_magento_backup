@@ -68,7 +68,7 @@ Restoring
 
 To restore from a backup, you'll first need to pull all of the partitioned backup files back down from Amazon S3 using their web client at http://aws.amazon.com/.  Once you have a local copy of these, you'll need to reassemble them into a tgz file:
 
-		$ cat magento_backup_2011-10-27.tgz.xaa magento_backup_2011-10-27.tgz.xab ... > magento_backup.tgz
+		$ cat `ls magento_backup_2012-06-14.tgz.*` ... > magento_backup_2012-06-14.tgz
 
 Then you'll need to extract the archive using tar and gzip:
 
