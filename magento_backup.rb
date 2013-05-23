@@ -40,7 +40,7 @@ end
 
 ### Read the YAML configuration file
 unless File.exists?(options[:config_file])
-	puts "\"#{options[:config_file]}\" doesn't exist.  Please create it."
+	puts "\"#{options[:config_file]}\" doesn't exist. Please create it."
 	exit 1
 end
 config = YAML::load_file(options[:config_file])
@@ -78,25 +78,35 @@ end
 STDOUT.sync = true
 
 if File.exists?("#{backup_name}.tgz.00")
-	puts "   - #{backup_name}.tgz.00 already exists.  Skipping archive generation."
+	puts "   - #{backup_name}.tgz.00 already exists. Skipping archive generation."
 
 else
 
-	### Make a backup of their uploaded assets
-	print "   - backing up uploaded assets... " 
-	asset_backup_command = "#{rsync_command} -av \"#{web_ssh_root}:#{config['webserver']['media_path']}/*\" \"#{backup_name}/assets/\" > #{backup_name}/backup.log 2>&1"
-	unless system(asset_backup_command)
-		puts "Couldn't download assets from #{web_ssh_root}:#{config['webserver']['media_path']} to #{backup_name}/assets/.   Details in #{backup_name}/backup.log."
+	### Make a backup of their code
+	print "   - backing up code... "
+	code_backup_command = "sudo #{rsync_command} -av \"#{web_ssh_root}:#{config['webserver']['app_root']}/*\" \"#{backup_name}/code/\" > #{backup_name}/backup.log 2>&1"
+	unless system(code_backup_command)
+		puts "Couldn't download code from #{web_ssh_root}:#{config['webserver']['app_root']} to #{backup_name}/code/. Details in #{backup_name}/backup.log."
 		exit 1
 	end
 	puts "done."
 
+	if File.directory?("#{backup_name}/assets/")
+		### Make a backup of their uploaded assets
+		print "   - backing up uploaded assets... " 
+		asset_backup_command = "#{rsync_command} -av \"#{backup_name}/assets/\" > #{backup_name}/backup.log 2>&1"
+		unless system(asset_backup_command)
+			puts "Couldn't download assets from #{web_ssh_root}:#{config['webserver']['media_path']} to #{backup_name}/assets/. Details in #{backup_name}/backup.log."
+			exit 1
+		end
+		puts "done."
+	end
 
 	### Put up the maintenance notice
 	print "   - putting up maintenance notice... "
 	maintenance_notice_command = "#{ssh_command} \"#{web_ssh_root}\" \"touch #{config['webserver']['app_root']}/maintenance.flag\" 2>#{backup_name}/backup.log"
 	unless system(maintenance_notice_command)
-		puts "Couldn't put up a maintenance notice.  Details in #{backup_name}/backup.log."
+		puts "Couldn't put up a maintenance notice. Details in #{backup_name}/backup.log."
 		exit 1
 	end
 	puts "done."
@@ -108,7 +118,7 @@ else
 	escaped_password.gsub!('$','\\\\\\\\\\$')
 	database_backup_command = "#{ssh_command} \"#{db_ssh_root}\" \"/usr/bin/mysqldump -u #{config['database']['db_username']} --password=#{escaped_password} #{config['database']['database']}\" > #{backup_name}/database/#{config['database']['database']}.sql 2>#{backup_name}/backup.log"
 	unless system(database_backup_command)
-		puts "Couldn't make a backup of the current database.  Details in #{backup_name}/backup.log."
+		puts "Couldn't make a backup of the current database. Details in #{backup_name}/backup.log."
 		exit 1
 	end
 	puts "done."
@@ -117,7 +127,7 @@ else
 	print "   - removing maintenance notice... "
 	remove_maintenance_notice_command = "#{ssh_command} \"#{web_ssh_root}\" \"rm #{config['webserver']['app_root']}/maintenance.flag\" 2>#{backup_name}/backup.log"
 	unless system(remove_maintenance_notice_command)
-		puts "Couldn't remove maintenance notice.  Details in #{backup_name}/backup.log."
+		puts "Couldn't remove maintenance notice. Details in #{backup_name}/backup.log."
 		exit 1
 	end
 	puts "done."
@@ -131,7 +141,7 @@ else
 							File.open("#{backup_name}/backup.log", 'w') { |f| f.write("Path to skip: #{path_from_config}") }
 							if !path_from_config.empty?
 								# prepend with backup path to guard against unintended deletions; remove bad leading characters
-								"#{backup_name}/#{path_from_config.gsub(/^[\/\.]+/,'')}"
+								"#{backup_name}/code/#{path_from_config.gsub(/^[\/\.]+/,'')}"
 							else
 								# explicitly map to nil so this is removed
 								nil
@@ -147,7 +157,7 @@ else
 	if paths_to_skip && !paths_to_skip.empty?
 		skip_paths_command = "#{rm_command} -rf #{paths_to_skip} 2>#{backup_name}/backup.log"
 		unless system(skip_paths_command)
-			puts "Couldn't skip paths.  Details in #{backup_name}/backup.log."
+			puts "Couldn't skip paths. Details in #{backup_name}/backup.log."
 			exit 1
 		end
 	end
@@ -160,12 +170,12 @@ else
 	if system(compress_backup_command)
 		if(options[:cleanup])
 			unless system("rm -rf #{backup_name}")
-		 		puts "Couldn't remove pre-archival data.  Exiting."
+		 		puts "Couldn't remove pre-archival data. Exiting."
 		 		exit 1
 			end
 		end
 	else
-		puts "Couldn't compress the backup in #{backup_name}.  Exiting."
+		puts "Couldn't compress the backup in #{backup_name}. Exiting."
 		exit 1
 	end
 	puts "done."
@@ -179,11 +189,11 @@ else
 	end
 	if system(split_backups_command)
 		unless system("rm -rf #{backup_name}.tgz")
-			puts "Couldn't remove unpartitioned data.  Exiting."
+			puts "Couldn't remove unpartitioned data. Exiting."
 			exit 1
 		end
 	else
-		puts "Couldn't partition the backup in #{backup_name}.  Exiting."
+		puts "Couldn't partition the backup in #{backup_name}. Exiting."
 		exit 1
 	end
 	puts "done."
@@ -215,7 +225,7 @@ begin
 	end
 	### If this succeeds, the backup already exists.
 
-	puts "There is already a backup called #{backup_name} in the bucket #{config['amazon']['bucket']}.  Exiting."
+	puts "There is already a backup called #{backup_name} in the bucket #{config['amazon']['bucket']}. Exiting."
 	exit 1
 
 rescue AWS::S3::NoSuchKey
@@ -240,8 +250,8 @@ rescue AWS::S3::NoSuchKey
 		puts <<-END
 Connection reset by peer.
 
-Unable to push backup file #{backup_name} to Amazon S3 due to a connection reset.  The fix for this is from <http://scie.nti.st/2008/3/14/amazon-s3-and-connection-reset-by-peer>:
-This most likely means you're running on Linux kernel 2.6.17 or higher with a TCP buffer size too large for your equipment to understand.  To work around this issue, you will need to reconfigure your sysctl to decrease your maximum TCP window size.  Put the following in /etc/sysctl.conf:
+Unable to push backup file #{backup_name} to Amazon S3 due to a connection reset. The fix for this is from <http://scie.nti.st/2008/3/14/amazon-s3-and-connection-reset-by-peer>:
+This most likely means you're running on Linux kernel 2.6.17 or higher with a TCP buffer size too large for your equipment to understand. To work around this issue, you will need to reconfigure your sysctl to decrease your maximum TCP window size. Put the following in /etc/sysctl.conf:
 \t# Workaround for TCP Window Scaling bugs in other ppl's equipment:
 \tnet.ipv4.tcp_wmem = 4096 16384 512000
 \tnet.ipv4.tcp_rmem = 4096 87380 512000
