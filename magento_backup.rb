@@ -139,7 +139,11 @@ else
 			end
 		end
 		# Clean and convert array to string for execution
-		paths_to_skip = cleaned_paths.compact.join(' ')
+		paths_to_skip = if cleaned_paths && cleaned_paths.instance_of?(Array)
+							cleaned_paths.compact.join(' ')
+						else
+							nil
+						end
 	end
 	if paths_to_skip && !paths_to_skip.empty?
 		skip_paths_command = "#{rm_command} -rf #{paths_to_skip} 2>#{backup_name}/backup.log"
