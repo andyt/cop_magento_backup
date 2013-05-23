@@ -59,7 +59,7 @@ ssh_command = `which ssh`.strip
 nice_command = `which nice`.strip
 rsync_command = `which rsync`.strip
 split_command = `which split`.strip
-rm_command = `which split`.strip
+rm_command = `which rm`.strip
 
 puts "Creating backup #{backup_name}..."
 unless system("mkdir -p #{backup_name}")
