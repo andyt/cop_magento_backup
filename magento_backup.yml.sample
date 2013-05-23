@@ -3,7 +3,7 @@ database:
     ssh_username: your_ssh_username
     db_username: your_mysql_username
     password: your_password
-    hostname: your_app.staging.copiousdev.com
+    hostname: your_app.staging.example.com
     database: your_app_staging
 amazon:
     bucket: your_app_backups
@@ -11,6 +11,13 @@ amazon:
     access_key_id: your_key_id
 webserver: 
     username: your_ssh_username
-    hostname: your_app.staging.copiousdev.com
+    hostname: your_app.staging.example.com
     app_root: /var/www/your_app-staging
     media_path: /var/www/your_app-staging/media
+    # Array of paths relative to app_root
+    paths_to_skip:
+        - var
+        - .git
+        - .svn
+        - temp
+        - tmp

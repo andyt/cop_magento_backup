@@ -6,7 +6,7 @@
 #
 # http://github.com/copious/magento_backup
 #
-# Copyright (c) 2011-2012 by Copious
+# Copyright (c) 2011-2013 by COPIOUS
 #
 # This software is available under the Academic Free License, version 3.0:
 # http://www.opensource.org/licenses/afl-3.0.php
@@ -46,19 +46,20 @@ end
 config = YAML::load_file(options[:config_file])
 
 web_ssh_root = "#{config['webserver']['username']}@#{config['webserver']['hostname']}"
-# web_ssh_root looks like: copious@sportswave.staging.copiousdev.com
+# web_ssh_root looks like: username@example.com
 
 db_ssh_root = "#{config['database']['ssh_username']}@#{config['database']['hostname']}"
-# db_ssh_root looks like: copious@sportswave.staging.copiousdev.com
+# db_ssh_root looks like: username@example.com
 
 backup_name = "#{config['site_name']}_backup_#{Time.now.year}-#{Time.now.month}-#{Time.now.day}"
-# backup_name looks like: sportswave_backup_2011-10-27
+# backup_name looks like: project_name_backup_2011-10-27
 
 tar_command = `which tar`.strip
 ssh_command = `which ssh`.strip
 nice_command = `which nice`.strip
 rsync_command = `which rsync`.strip
 split_command = `which split`.strip
+rm_command = `which split`.strip
 
 puts "Creating backup #{backup_name}..."
 unless system("mkdir -p #{backup_name}")
@@ -100,7 +101,6 @@ else
 	end
 	puts "done."
 
-
 	### Make a backup of their database
 	print "   - backing up database... "
 	escaped_password = config['database']['password']
@@ -120,7 +120,34 @@ else
 		puts "Couldn't remove maintenance notice.  Details in #{backup_name}/backup.log."
 		exit 1
 	end
+	puts "done."
 
+	### Skipping paths
+	print "   - skipping paths... "
+	paths_to_skip = ''
+	if config['webserver']['paths_to_skip'] && config['webserver']['paths_to_skip'].instance_of?(Array)
+		# Convert configs to safeguarded array of paths
+		cleaned_paths = config['webserver']['paths_to_skip'].compact.map do |path_from_config|
+			# TODO: print to log
+			path_from_config.strip!
+			if !path_from_config.empty?
+				# prepend with backup path to guard against unintended deletions; remove bad leading characters
+				"#{backup_name}/#{path_from_config.gsub(/^(\/|\.)+/,'')}"
+			else
+				# explicitly map to nil so this is removed
+				nil
+			end
+		end
+		# Convert array to 
+		paths_to_skip = cleaned_paths.compact.join(' ')
+	end
+	if !paths_to_skip.empty?
+		skip_paths_command = "#{rm_command} -rf #{paths_to_skip} 2>#{backup_name}/backup.log"
+		unless system(skip_paths_command)
+			puts "Couldn't skip paths.  Details in #{backup_name}/backup.log."
+			exit 1
+		end
+	end
 	puts "done."
 
 
