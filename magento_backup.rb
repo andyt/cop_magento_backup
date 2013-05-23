@@ -138,10 +138,10 @@ else
 				nil
 			end
 		end
-		# Convert array to 
+		# Clean and convert array to string for execution
 		paths_to_skip = cleaned_paths.compact.join(' ')
 	end
-	if !paths_to_skip.empty?
+	if paths_to_skip && !paths_to_skip.empty?
 		skip_paths_command = "#{rm_command} -rf #{paths_to_skip} 2>#{backup_name}/backup.log"
 		unless system(skip_paths_command)
 			puts "Couldn't skip paths.  Details in #{backup_name}/backup.log."
