@@ -127,8 +127,8 @@ else
 	paths_to_skip = if config['webserver']['paths_to_skip'] && config['webserver']['paths_to_skip'].instance_of?(Array)
 						# Convert configs to safeguarded array of paths
 						cleaned_paths = config['webserver']['paths_to_skip'].compact.map do |path_from_config|
-							# TODO: print to log
 							path_from_config.strip!
+							File.open("#{backup_name}/backup.log", 'w') { |f| f.write("Path to skip: #{path_from_config}") }
 							if !path_from_config.empty?
 								# prepend with backup path to guard against unintended deletions; remove bad leading characters
 								"#{backup_name}/#{path_from_config.gsub(/^[\/\.]+/,'')}"
