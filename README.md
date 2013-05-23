@@ -50,7 +50,7 @@ To use it, drop your authentication vectors into a `magento_backup.yml` file to 
 
 Once that's in place, run the script:
 
-		$ ./magento_backup.rb
+		$ bundle exec ruby ./magento_backup.rb
 
 It should produce output roughly equivalent to this:
 

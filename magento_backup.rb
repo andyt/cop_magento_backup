@@ -59,6 +59,7 @@ ssh_command = `which ssh`.strip
 nice_command = `which nice`.strip
 rsync_command = `which rsync`.strip
 split_command = `which split`.strip
+mysqldump_command = `which mysqldump`.strip
 rm_command = `which rm`.strip
 
 puts "Creating backup #{backup_name}..."
@@ -116,7 +117,7 @@ else
 	escaped_password = config['database']['password']
 	escaped_password.gsub!('!','\\!')
 	escaped_password.gsub!('$','\\\\\\\\\\$')
-	database_backup_command = "#{ssh_command} \"#{db_ssh_root}\" \"/usr/bin/mysqldump -u #{config['database']['db_username']} --password=#{escaped_password} #{config['database']['database']}\" > #{backup_name}/database/#{config['database']['database']}.sql 2>#{backup_name}/backup.log"
+	database_backup_command = "#{ssh_command} \"#{db_ssh_root}\" \"#{mysqldump_command} -u #{config['database']['db_username']} --password=#{escaped_password} #{config['database']['database']}\" > #{backup_name}/database/#{config['database']['database']}.sql 2>#{backup_name}/backup.log"
 	unless system(database_backup_command)
 		puts "Couldn't make a backup of the current database. Details in #{backup_name}/backup.log."
 		exit 1
