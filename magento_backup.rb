@@ -132,7 +132,7 @@ else
 			path_from_config.strip!
 			if !path_from_config.empty?
 				# prepend with backup path to guard against unintended deletions; remove bad leading characters
-				"#{backup_name}/#{path_from_config.gsub(/^(\/|\.)+/,'')}"
+				"#{backup_name}/#{path_from_config.gsub(/^[\/\.]+/,'')}"
 			else
 				# explicitly map to nil so this is removed
 				nil
