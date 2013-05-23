@@ -124,27 +124,26 @@ else
 
 	### Skipping paths
 	print "   - skipping paths... "
-	paths_to_skip = ''
-	if config['webserver']['paths_to_skip'] && config['webserver']['paths_to_skip'].instance_of?(Array)
-		# Convert configs to safeguarded array of paths
-		cleaned_paths = config['webserver']['paths_to_skip'].compact.map do |path_from_config|
-			# TODO: print to log
-			path_from_config.strip!
-			if !path_from_config.empty?
-				# prepend with backup path to guard against unintended deletions; remove bad leading characters
-				"#{backup_name}/#{path_from_config.gsub(/^[\/\.]+/,'')}"
-			else
-				# explicitly map to nil so this is removed
-				nil
-			end
-		end
-		# Clean and convert array to string for execution
-		paths_to_skip = if cleaned_paths && cleaned_paths.instance_of?(Array)
+	paths_to_skip = if config['webserver']['paths_to_skip'] && config['webserver']['paths_to_skip'].instance_of?(Array)
+						# Convert configs to safeguarded array of paths
+						cleaned_paths = config['webserver']['paths_to_skip'].compact.map do |path_from_config|
+							# TODO: print to log
+							path_from_config.strip!
+							if !path_from_config.empty?
+								# prepend with backup path to guard against unintended deletions; remove bad leading characters
+								"#{backup_name}/#{path_from_config.gsub(/^[\/\.]+/,'')}"
+							else
+								# explicitly map to nil so this is removed
+								nil
+							end
+						end
+						# Clean and convert array to string for execution
+						if cleaned_paths && cleaned_paths.instance_of?(Array)
 							cleaned_paths.compact.join(' ')
 						else
 							nil
 						end
-	end
+					end
 	if paths_to_skip && !paths_to_skip.empty?
 		skip_paths_command = "#{rm_command} -rf #{paths_to_skip} 2>#{backup_name}/backup.log"
 		unless system(skip_paths_command)
