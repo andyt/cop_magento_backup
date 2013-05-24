@@ -103,14 +103,16 @@ else
 		puts "done."
 	end
 
-	### Put up the maintenance notice
-	print "   - putting up maintenance notice... "
-	maintenance_notice_command = "#{ssh_command} \"#{web_ssh_root}\" \"touch #{config['webserver']['app_root']}/maintenance.flag\" 2>#{backup_name}/backup.log"
-	unless system(maintenance_notice_command)
-		puts "Couldn't put up a maintenance notice. Details in #{backup_name}/backup.log."
-		exit 1
+	if config['webserver']['use_maintenance_flag']
+		### Put up the maintenance notice
+		print "   - putting up maintenance notice... "
+		maintenance_notice_command = "#{ssh_command} \"#{web_ssh_root}\" \"touch #{config['webserver']['app_root']}/maintenance.flag\" 2>#{backup_name}/backup.log"
+		unless system(maintenance_notice_command)
+			puts "Couldn't put up a maintenance notice. Details in #{backup_name}/backup.log."
+			exit 1
+		end
+		puts "done."
 	end
-	puts "done."
 
 	### Make a backup of their database
 	print "   - backing up database... "
@@ -124,14 +126,16 @@ else
 	end
 	puts "done."
 
-	### Remove the maintenance notice
-	print "   - removing maintenance notice... "
-	remove_maintenance_notice_command = "#{ssh_command} \"#{web_ssh_root}\" \"rm #{config['webserver']['app_root']}/maintenance.flag\" 2>#{backup_name}/backup.log"
-	unless system(remove_maintenance_notice_command)
-		puts "Couldn't remove maintenance notice. Details in #{backup_name}/backup.log."
-		exit 1
+	if config['webserver']['use_maintenance_flag']
+		### Remove the maintenance notice
+		print "   - removing maintenance notice... "
+		remove_maintenance_notice_command = "#{ssh_command} \"#{web_ssh_root}\" \"rm #{config['webserver']['app_root']}/maintenance.flag\" 2>#{backup_name}/backup.log"
+		unless system(remove_maintenance_notice_command)
+			puts "Couldn't remove maintenance notice. Details in #{backup_name}/backup.log."
+			exit 1
+		end
+		puts "done."
 	end
-	puts "done."
 
 	### Skipping paths
 	print "   - skipping paths... "

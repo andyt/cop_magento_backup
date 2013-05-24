@@ -13,6 +13,7 @@ amazon:
 webserver: 
     username: your_ssh_username
     hostname: your_app.staging.example.com
+    use_maintenance_flag: FalseClass
     app_root: /var/www/your_app-staging
     media_path: /var/www/your_app-staging/media
     # Array of paths relative to app_root
