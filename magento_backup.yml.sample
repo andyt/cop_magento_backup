@@ -17,7 +17,7 @@ webserver:
     app_root: /var/www/your_app-staging
     media_path: /var/www/your_app-staging/media
     # Array of paths relative to app_root
-    paths_to_skip:
+    paths_to_exclude:
         - var
         - .git
         - .svn

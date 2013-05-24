@@ -137,13 +137,13 @@ else
 		puts "done."
 	end
 
-	### Skipping paths
-	print "   - skipping paths... "
-	paths_to_skip = if config['webserver']['paths_to_skip'] && config['webserver']['paths_to_skip'].instance_of?(Array)
+	### Excluding paths
+	print "   - excluding paths... "
+	paths_to_exclude = if config['webserver']['paths_to_exclude'] && config['webserver']['paths_to_exclude'].instance_of?(Array)
 						# Convert configs to safeguarded array of paths
-						cleaned_paths = config['webserver']['paths_to_skip'].compact.map do |path_from_config|
+						cleaned_paths = config['webserver']['paths_to_exclude'].compact.map do |path_from_config|
 							path_from_config.strip!
-							File.open("#{backup_name}/backup.log", 'a') { |f| f.write("Path to skip: #{path_from_config}") }
+							File.open("#{backup_name}/backup.log", 'a') { |f| f.write("Path to exclude: #{path_from_config}") }
 							if !path_from_config.empty?
 								# prepend with backup path to guard against unintended deletions; remove bad leading characters
 								"#{backup_name}/code/#{path_from_config.gsub(/^[\/\.]+/,'')}"
@@ -159,10 +159,10 @@ else
 							nil
 						end
 					end
-	if paths_to_skip && !paths_to_skip.empty?
-		skip_paths_command = "#{rm_command} -rf #{paths_to_skip} 2>#{backup_name}/backup.log"
-		unless system(skip_paths_command)
-			puts "Couldn't skip paths. Details in #{backup_name}/backup.log."
+	if paths_to_exclude && !paths_to_exclude.empty?
+		exclude_paths_command = "#{rm_command} -rf #{paths_to_exclude} 2>#{backup_name}/backup.log"
+		unless system(exclude_paths_command)
+			puts "Couldn't exclude paths. Details in #{backup_name}/backup.log."
 			exit 1
 		end
 	end
