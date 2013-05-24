@@ -6,7 +6,7 @@
 #
 # http://github.com/copious/magento_backup
 #
-# Copyright (c) 2011-2012 by Copious
+# Copyright (c) 2011-2013 by COPIOUS
 #
 # This software is available under the Academic Free License, version 3.0:
 # http://www.opensource.org/licenses/afl-3.0.php
@@ -40,25 +40,27 @@ end
 
 ### Read the YAML configuration file
 unless File.exists?(options[:config_file])
-	puts "\"#{options[:config_file]}\" doesn't exist.  Please create it."
+	puts "\"#{options[:config_file]}\" doesn't exist. Please create it."
 	exit 1
 end
 config = YAML::load_file(options[:config_file])
 
 web_ssh_root = "#{config['webserver']['username']}@#{config['webserver']['hostname']}"
-# web_ssh_root looks like: copious@sportswave.staging.copiousdev.com
+# web_ssh_root looks like: username@example.com
 
 db_ssh_root = "#{config['database']['ssh_username']}@#{config['database']['hostname']}"
-# db_ssh_root looks like: copious@sportswave.staging.copiousdev.com
+# db_ssh_root looks like: username@example.com
 
 backup_name = "#{config['site_name']}_backup_#{Time.now.year}-#{Time.now.month}-#{Time.now.day}"
-# backup_name looks like: sportswave_backup_2011-10-27
+# backup_name looks like: project_name_backup_2011-10-27
 
 tar_command = `which tar`.strip
 ssh_command = `which ssh`.strip
 nice_command = `which nice`.strip
 rsync_command = `which rsync`.strip
 split_command = `which split`.strip
+mysqldump_command = `which mysqldump`.strip
+rm_command = `which rm`.strip
 
 puts "Creating backup #{backup_name}..."
 unless system("mkdir -p #{backup_name}")
@@ -77,50 +79,93 @@ end
 STDOUT.sync = true
 
 if File.exists?("#{backup_name}.tgz.00")
-	puts "   - #{backup_name}.tgz.00 already exists.  Skipping archive generation."
+	puts "   - #{backup_name}.tgz.00 already exists. Skipping archive generation."
 
 else
 
-	### Make a backup of their uploaded assets
-	print "   - backing up uploaded assets... " 
-	asset_backup_command = "#{rsync_command} -av \"#{web_ssh_root}:#{config['webserver']['media_path']}/*\" \"#{backup_name}/assets/\" > #{backup_name}/backup.log 2>&1"
-	unless system(asset_backup_command)
-		puts "Couldn't download assets from #{web_ssh_root}:#{config['webserver']['media_path']} to #{backup_name}/assets/.   Details in #{backup_name}/backup.log."
+	### Make a backup of their code
+	print "   - backing up code... "
+	code_backup_command = "#{rsync_command} -av \"#{web_ssh_root}:#{config['webserver']['app_root']}/*\" \"#{backup_name}/code/\" > #{backup_name}/backup.log 2>&1"
+	unless system(code_backup_command)
+		puts "Couldn't download code from #{web_ssh_root}:#{config['webserver']['app_root']} to #{backup_name}/code/. Details in #{backup_name}/backup.log."
 		exit 1
 	end
 	puts "done."
 
-
-	### Put up the maintenance notice
-	print "   - putting up maintenance notice... "
-	maintenance_notice_command = "#{ssh_command} \"#{web_ssh_root}\" \"touch #{config['webserver']['app_root']}/maintenance.flag\" 2>#{backup_name}/backup.log"
-	unless system(maintenance_notice_command)
-		puts "Couldn't put up a maintenance notice.  Details in #{backup_name}/backup.log."
-		exit 1
+	if File.directory?("#{backup_name}/assets/")
+		### Make a backup of their uploaded assets
+		print "   - backing up uploaded assets... " 
+		asset_backup_command = "#{rsync_command} -av \"#{backup_name}/assets/\" > #{backup_name}/backup.log 2>&1"
+		unless system(asset_backup_command)
+			puts "Couldn't download assets from #{web_ssh_root}:#{config['webserver']['media_path']} to #{backup_name}/assets/. Details in #{backup_name}/backup.log."
+			exit 1
+		end
+		puts "done."
 	end
-	puts "done."
 
+	if config['webserver']['use_maintenance_flag']
+		### Put up the maintenance notice
+		print "   - putting up maintenance notice... "
+		maintenance_notice_command = "#{ssh_command} \"#{web_ssh_root}\" \"touch #{config['webserver']['app_root']}/maintenance.flag\" 2>#{backup_name}/backup.log"
+		unless system(maintenance_notice_command)
+			puts "Couldn't put up a maintenance notice. Details in #{backup_name}/backup.log."
+			exit 1
+		end
+		puts "done."
+	end
 
 	### Make a backup of their database
 	print "   - backing up database... "
 	escaped_password = config['database']['password']
 	escaped_password.gsub!('!','\\!')
 	escaped_password.gsub!('$','\\\\\\\\\\$')
-	database_backup_command = "#{ssh_command} \"#{db_ssh_root}\" \"/usr/bin/mysqldump -u #{config['database']['db_username']} --password=#{escaped_password} #{config['database']['database']}\" > #{backup_name}/database/#{config['database']['database']}.sql 2>#{backup_name}/backup.log"
+	database_backup_command = "#{ssh_command} \"#{db_ssh_root}\" \"#{mysqldump_command} -u #{config['database']['db_username']} --password=#{escaped_password} #{config['database']['database']}\" > #{backup_name}/database/#{config['database']['database']}.sql 2>#{backup_name}/backup.log"
 	unless system(database_backup_command)
-		puts "Couldn't make a backup of the current database.  Details in #{backup_name}/backup.log."
+		puts "Couldn't make a backup of the current database. Details in #{backup_name}/backup.log."
 		exit 1
 	end
 	puts "done."
 
-	### Remove the maintenance notice
-	print "   - removing maintenance notice... "
-	remove_maintenance_notice_command = "#{ssh_command} \"#{web_ssh_root}\" \"rm #{config['webserver']['app_root']}/maintenance.flag\" 2>#{backup_name}/backup.log"
-	unless system(remove_maintenance_notice_command)
-		puts "Couldn't remove maintenance notice.  Details in #{backup_name}/backup.log."
-		exit 1
+	if config['webserver']['use_maintenance_flag']
+		### Remove the maintenance notice
+		print "   - removing maintenance notice... "
+		remove_maintenance_notice_command = "#{ssh_command} \"#{web_ssh_root}\" \"rm #{config['webserver']['app_root']}/maintenance.flag\" 2>#{backup_name}/backup.log"
+		unless system(remove_maintenance_notice_command)
+			puts "Couldn't remove maintenance notice. Details in #{backup_name}/backup.log."
+			exit 1
+		end
+		puts "done."
 	end
 
+	### Excluding paths
+	print "   - excluding paths... "
+	paths_to_exclude = if config['webserver']['paths_to_exclude'] && config['webserver']['paths_to_exclude'].instance_of?(Array)
+						# Convert configs to safeguarded array of paths
+						cleaned_paths = config['webserver']['paths_to_exclude'].compact.map do |path_from_config|
+							path_from_config.strip!
+							File.open("#{backup_name}/backup.log", 'a') { |f| f.write("Path to exclude: #{path_from_config}") }
+							if !path_from_config.empty?
+								# prepend with backup path to guard against unintended deletions; remove bad leading characters
+								"#{backup_name}/code/#{path_from_config.gsub(/^[\/\.]+/,'')}"
+							else
+								# explicitly map to nil so this is removed
+								nil
+							end
+						end
+						# Clean and convert array to string for execution
+						if cleaned_paths && cleaned_paths.instance_of?(Array)
+							cleaned_paths.compact.join(' ')
+						else
+							nil
+						end
+					end
+	if paths_to_exclude && !paths_to_exclude.empty?
+		exclude_paths_command = "#{rm_command} -rf #{paths_to_exclude} 2>#{backup_name}/backup.log"
+		unless system(exclude_paths_command)
+			puts "Couldn't exclude paths. Details in #{backup_name}/backup.log."
+			exit 1
+		end
+	end
 	puts "done."
 
 
@@ -130,12 +175,12 @@ else
 	if system(compress_backup_command)
 		if(options[:cleanup])
 			unless system("rm -rf #{backup_name}")
-		 		puts "Couldn't remove pre-archival data.  Exiting."
+		 		puts "Couldn't remove pre-archival data. Exiting."
 		 		exit 1
 			end
 		end
 	else
-		puts "Couldn't compress the backup in #{backup_name}.  Exiting."
+		puts "Couldn't compress the backup in #{backup_name}. Exiting."
 		exit 1
 	end
 	puts "done."
@@ -149,11 +194,11 @@ else
 	end
 	if system(split_backups_command)
 		unless system("rm -rf #{backup_name}.tgz")
-			puts "Couldn't remove unpartitioned data.  Exiting."
+			puts "Couldn't remove unpartitioned data. Exiting."
 			exit 1
 		end
 	else
-		puts "Couldn't partition the backup in #{backup_name}.  Exiting."
+		puts "Couldn't partition the backup in #{backup_name}. Exiting."
 		exit 1
 	end
 	puts "done."
@@ -185,11 +230,12 @@ begin
 	end
 	### If this succeeds, the backup already exists.
 
-	puts "There is already a backup called #{backup_name} in the bucket #{config['amazon']['bucket']}.  Exiting."
+	puts "There is already a backup called #{backup_name} in the bucket #{config['amazon']['bucket']}. Exiting."
 	exit 1
 
 rescue AWS::S3::NoSuchKey
 	files_to_upload = backup_file_list.clone
+	access_control = config['amazon']['access_control'] ? config['amazon']['access_control'] : :private
 
 	# prune files_to_upload for each existing file
 	if current_file # if this is not nil, an exception prevented it, indicating the file does not exist. This is the first file to upload.
@@ -204,14 +250,20 @@ rescue AWS::S3::NoSuchKey
 
 	begin
 		files_to_upload.each do |file|
-			AWS::S3::S3Object.store(file, open(file), config['amazon']['bucket'], :content_type => 'application/x-compressed', :access => :private)
+			AWS::S3::S3Object.store(
+				file,
+				open(file),
+				config['amazon']['bucket'],
+				:content_type => 'application/x-compressed',
+				:access => access_control
+			)
 		end
 	rescue Errno::ECONNRESET
 		puts <<-END
 Connection reset by peer.
 
-Unable to push backup file #{backup_name} to Amazon S3 due to a connection reset.  The fix for this is from <http://scie.nti.st/2008/3/14/amazon-s3-and-connection-reset-by-peer>:
-This most likely means you're running on Linux kernel 2.6.17 or higher with a TCP buffer size too large for your equipment to understand.  To work around this issue, you will need to reconfigure your sysctl to decrease your maximum TCP window size.  Put the following in /etc/sysctl.conf:
+Unable to push backup file #{backup_name} to Amazon S3 due to a connection reset. The fix for this is from <http://scie.nti.st/2008/3/14/amazon-s3-and-connection-reset-by-peer>:
+This most likely means you're running on Linux kernel 2.6.17 or higher with a TCP buffer size too large for your equipment to understand. To work around this issue, you will need to reconfigure your sysctl to decrease your maximum TCP window size. Put the following in /etc/sysctl.conf:
 \t# Workaround for TCP Window Scaling bugs in other ppl's equipment:
 \tnet.ipv4.tcp_wmem = 4096 16384 512000
 \tnet.ipv4.tcp_rmem = 4096 87380 512000

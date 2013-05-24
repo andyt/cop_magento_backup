@@ -3,14 +3,23 @@ database:
     ssh_username: your_ssh_username
     db_username: your_mysql_username
     password: your_password
-    hostname: your_app.staging.copiousdev.com
+    hostname: your_app.staging.example.com
     database: your_app_staging
 amazon:
     bucket: your_app_backups
     secret_access_key: your_secret
     access_key_id: your_key_id
+    access_control: !ruby/symbol private
 webserver: 
     username: your_ssh_username
-    hostname: your_app.staging.copiousdev.com
+    hostname: your_app.staging.example.com
+    use_maintenance_flag: false
     app_root: /var/www/your_app-staging
     media_path: /var/www/your_app-staging/media
+    # Array of paths relative to app_root
+    paths_to_exclude:
+        - var
+        - .git
+        - .svn
+        - temp
+        - tmp

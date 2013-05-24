@@ -45,10 +45,12 @@ To use it, drop your authentication vectors into a `magento_backup.yml` file to 
 		    hostname: your_app.staging.copiousdev.com
 		    app_root: /var/www/your_app-staging
 		    media_path: /var/www/your_app-staging/media
+		    paths_to_exclude:
+		        - var
 
 Once that's in place, run the script:
 
-		$ ./magento_backup.rb
+		$ bundle exec ruby ./magento_backup.rb
 
 It should produce output roughly equivalent to this:
 
@@ -57,6 +59,7 @@ It should produce output roughly equivalent to this:
 		   - putting up maintenance notice... done.
 		   - backing up database... done.
 		   - removing maintenance notice... done.
+		   - excluding paths... done.
 		   - compressing backup... done.
 		   - splitting backups... done.
 		   - uploading to amazon cloud... done.
