@@ -85,7 +85,7 @@ else
 
 	### Make a backup of their code
 	print "   - backing up code... "
-	code_backup_command = "sudo #{rsync_command} -av \"#{web_ssh_root}:#{config['webserver']['app_root']}/*\" \"#{backup_name}/code/\" > #{backup_name}/backup.log 2>&1"
+	code_backup_command = "#{rsync_command} -av \"#{web_ssh_root}:#{config['webserver']['app_root']}/*\" \"#{backup_name}/code/\" > #{backup_name}/backup.log 2>&1"
 	unless system(code_backup_command)
 		puts "Couldn't download code from #{web_ssh_root}:#{config['webserver']['app_root']} to #{backup_name}/code/. Details in #{backup_name}/backup.log."
 		exit 1
