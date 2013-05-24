@@ -231,6 +231,7 @@ begin
 
 rescue AWS::S3::NoSuchKey
 	files_to_upload = backup_file_list.clone
+	access_control = config['amazon']['access_control'] ? config['amazon']['access_control'] : :private
 
 	# prune files_to_upload for each existing file
 	if current_file # if this is not nil, an exception prevented it, indicating the file does not exist. This is the first file to upload.
@@ -245,7 +246,13 @@ rescue AWS::S3::NoSuchKey
 
 	begin
 		files_to_upload.each do |file|
-			AWS::S3::S3Object.store(file, open(file), config['amazon']['bucket'], :content_type => 'application/x-compressed', :access => :private)
+			AWS::S3::S3Object.store(
+				file,
+				open(file),
+				config['amazon']['bucket'],
+				:content_type => 'application/x-compressed',
+				:access => access_control
+			)
 		end
 	rescue Errno::ECONNRESET
 		puts <<-END

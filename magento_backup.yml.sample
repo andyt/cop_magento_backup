@@ -9,6 +9,7 @@ amazon:
     bucket: your_app_backups
     secret_access_key: your_secret
     access_key_id: your_key_id
+    access_control: !ruby/symbol private
 webserver: 
     username: your_ssh_username
     hostname: your_app.staging.example.com
