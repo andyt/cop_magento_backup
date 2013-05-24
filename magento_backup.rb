@@ -143,7 +143,7 @@ else
 						# Convert configs to safeguarded array of paths
 						cleaned_paths = config['webserver']['paths_to_skip'].compact.map do |path_from_config|
 							path_from_config.strip!
-							File.open("#{backup_name}/backup.log", 'w') { |f| f.write("Path to skip: #{path_from_config}") }
+							File.open("#{backup_name}/backup.log", 'a') { |f| f.write("Path to skip: #{path_from_config}") }
 							if !path_from_config.empty?
 								# prepend with backup path to guard against unintended deletions; remove bad leading characters
 								"#{backup_name}/code/#{path_from_config.gsub(/^[\/\.]+/,'')}"
