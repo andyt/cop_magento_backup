@@ -1,13 +1,13 @@
 GEM
   remote: http://rubygems.org/
   specs:
-    aws-s3 (0.6.2)
+    aws-s3 (0.6.3)
       builder
       mime-types
       xml-simple
-    builder (3.0.0)
-    mime-types (1.17.2)
-    xml-simple (1.1.1)
+    builder (3.2.0)
+    mime-types (1.23)
+    xml-simple (1.1.2)
 
 PLATFORMS
   ruby
