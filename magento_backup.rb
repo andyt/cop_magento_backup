@@ -201,9 +201,13 @@ s3 = RightAws::S3Interface.new(
 	}
 )
 
-# get the ACL for this bucket as a test for presence of the bucket
-bucket_acl = s3.get_bucket_acl(config['amazon']['bucket'])
-unless bucket_acl
+backups_bucket = s3.bucket(config['amazon']['bucket'])
+begin
+	# test for presence of the bucket
+	backups_bucket.keys
+rescue Exception => e
+	puts "Exception: #{e.inspect}"
+	raise e
 	# create the bucket
 	RightAws::S3::Bucket.create(s3, config['amazon']['bucket'])
 end
