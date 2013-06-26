@@ -204,8 +204,8 @@ s3 = RightAws::S3Interface.new(
 begin
 	# test for presence of the bucket
 	s3.bucket_location(config['amazon']['bucket'])
-rescue Exception => e
-	puts "Exception: #{e.inspect}"
+rescue RightAws::AwsError => e
+	puts "Exception: #{e.inspect} (#{e.message})"
 	raise e
 	# create the bucket
 	RightAws::S3::Bucket.create(s3, config['amazon']['bucket'])
