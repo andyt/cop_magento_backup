@@ -191,7 +191,7 @@ backup_file_list = Dir.glob("#{backup_name}\.tgz\.*")
 ### Upload the backup file to Amazon S3
 print "   - uploading to amazon cloud... "
 
-s3 = RightAws::S3Interface.new(
+s3 = RightAws::S3.new(
 	config['amazon']['access_key_id'],
 	config['amazon']['secret_access_key'],
 	{
@@ -201,9 +201,10 @@ s3 = RightAws::S3Interface.new(
 	}
 )
 
+backups_bucket = s3.bucket(config['amazon']['bucket'])
 begin
 	# test for presence of the bucket
-	s3.bucket_location(config['amazon']['bucket'])
+	backups_bucket.keys
 rescue Exception => e
 	puts "Exception: #{e.inspect}"
 	raise e
