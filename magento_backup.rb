@@ -57,7 +57,6 @@ tar_command = `which tar`.strip
 ssh_command = `which ssh`.strip
 nice_command = `which nice`.strip
 rsync_command = `which rsync`.strip
-split_command = `which split`.strip
 mysqldump_command = `which mysqldump`.strip
 rm_command = `which rm`.strip
 
