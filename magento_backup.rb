@@ -248,6 +248,10 @@ rescue Exception => e
 				:access => access_control
 			)
 		end
+	rescue Exception => e
+		puts "Exception: #{e.inspect}"
+		raise e
+	end
 end
 puts "done."
 
