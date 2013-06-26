@@ -201,10 +201,9 @@ s3 = RightAws::S3Interface.new(
 	}
 )
 
-backups_bucket = s3.bucket(config['amazon']['bucket'])
 begin
 	# test for presence of the bucket
-	s3.bucket_location
+	s3.bucket_location(config['amazon']['bucket'])
 rescue Exception => e
 	puts "Exception: #{e.inspect}"
 	raise e
