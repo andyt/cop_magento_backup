@@ -191,7 +191,7 @@ backup_file_list = Dir.glob("#{backup_name}\.tgz\.*")
 ### Upload the backup file to Amazon S3
 print "   - uploading to amazon cloud... "
 
-s3 = RightAws::S3Interface.new(
+s3 = RightAws::S3.new(
 	config['amazon']['access_key_id'],
 	config['amazon']['secret_access_key'],
 	{
