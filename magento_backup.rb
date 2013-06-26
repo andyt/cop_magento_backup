@@ -19,6 +19,7 @@ require 'yaml'
 require 'openssl'
 require 'rubygems'
 require 'optparse'
+require 'right_aws'
 
 options = {
 	:cleanup => true,
