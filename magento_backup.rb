@@ -227,7 +227,7 @@ begin
 	exit 1
 
 rescue RightAws::AwsError => e
-	if e.message != '404: Not Found'
+	if !e.message.include?('404: Not Found')
 		# not an expected exception
 		puts "Exception: #{e.inspect}"
 		raise e
