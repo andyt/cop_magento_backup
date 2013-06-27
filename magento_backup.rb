@@ -185,8 +185,8 @@ else
 	puts "done."
 
 end
-# Get a list of the generated files.
-backup_file_list = Dir.glob("#{backup_name}\.tgz\.*")
+# Get a list of the generated files
+backup_file_list = Dir.glob("#{backup_name}\.tgz*")
 
 ### Upload the backup file to Amazon S3
 print "   - uploading to amazon cloud... "
