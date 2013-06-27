@@ -209,7 +209,7 @@ rescue RightAws::AwsError => e
 		puts "WARNING: access denied when checking bucket. Attempting to continue..."
 	else
 		# assume permissions to create the bucket
-		RightAws::S3::Bucket.create(s3, config['amazon']['bucket'])
+		RightAws::S3::Bucket.create(s3, config['amazon']['bucket'], true, access_control)
 	end
 end
 
