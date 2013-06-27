@@ -227,7 +227,17 @@ begin
 	exit 1
 
 rescue RightAws::AwsError => e
-	if !e.message.include?('404: Not Found')
+	okay_exception = if e.message.include?('404: Not Found')
+						# file not uploaded
+						true
+					elsif e.message.include?('403: Forbidden')
+						# assuming file exists but permission denied to read it
+						puts "There is already a backup called #{backup_name} in the bucket #{config['amazon']['bucket']}. Exiting."
+						exit 1
+					else
+						false
+					end
+	if !okay_exception
 		# not an expected exception
 		puts "Exception: #{e.inspect}"
 		raise e
