@@ -227,10 +227,11 @@ begin
 	exit 1
 
 rescue RightAws::AwsError => e
-	#if e.message != 'AccessDenied: Access Denied'
+	if e.message != '404: Not Found'
+		# not an expected exception
 		puts "Exception: #{e.inspect}"
 		raise e
-	#end
+	end
 
 	files_to_upload = backup_file_list.clone
 	access_control = config['amazon']['access_control'] ? config['amazon']['access_control'] : :private
@@ -243,7 +244,7 @@ rescue RightAws::AwsError => e
 	else
 		# if current_file is nil, all backup files already exist. Exit and do nothing.
 		puts "Backup files already uploaded. Exiting."
-		exit 1
+		exit 0
 	end
 
 	begin
