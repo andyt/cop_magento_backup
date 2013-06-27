@@ -264,7 +264,7 @@ rescue RightAws::AwsError => e
 				file,
 				File.open(file),
 				:content_type => 'application/x-compressed',
-				:access => access_control
+				'x-amz-grant-read-acp' => true
 			)
 		end
 	rescue Exception => e
