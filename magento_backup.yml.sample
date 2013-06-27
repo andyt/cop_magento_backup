@@ -12,7 +12,7 @@ amazon:
     server: s3.amazonaws.com
     port: 443
     protocol: https
-    access_control: !ruby/symbol private
+    access_control: 'authenticated-read'
 webserver: 
     username: your_ssh_username
     hostname: your_app.staging.example.com
