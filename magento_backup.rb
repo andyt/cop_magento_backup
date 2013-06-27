@@ -18,8 +18,8 @@ Bundler.setup()
 require 'yaml'
 require 'openssl'
 require 'rubygems'
-require 'aws/s3'
 require 'optparse'
+require 'right_aws'
 
 options = {
 	:cleanup => true,
@@ -58,7 +58,6 @@ tar_command = `which tar`.strip
 ssh_command = `which ssh`.strip
 nice_command = `which nice`.strip
 rsync_command = `which rsync`.strip
-split_command = `which split`.strip
 mysqldump_command = `which mysqldump`.strip
 rm_command = `which rm`.strip
 
@@ -78,8 +77,8 @@ end
 
 STDOUT.sync = true
 
-if File.exists?("#{backup_name}.tgz.00")
-	puts "   - #{backup_name}.tgz.00 already exists. Skipping archive generation."
+if File.exists?("#{backup_name}.tgz")
+	puts "   - #{backup_name}.tgz already exists. Skipping archive generation."
 
 else
 
@@ -185,39 +184,33 @@ else
 	end
 	puts "done."
 
-	### Partition the backups into files that won't break AMZN S3
-	print "   - splitting backups... "
-	if RUBY_PLATFORM =~ /darwin/ # mac
-		split_backups_command = "#{split_command} -b 1024m #{backup_name}.tgz #{backup_name}.tgz."
-	else
-		split_backups_command = "#{split_command} -b 1024M -d #{backup_name}.tgz #{backup_name}.tgz."
-	end
-	if system(split_backups_command)
-		unless system("rm -rf #{backup_name}.tgz")
-			puts "Couldn't remove unpartitioned data. Exiting."
-			exit 1
-		end
-	else
-		puts "Couldn't partition the backup in #{backup_name}. Exiting."
-		exit 1
-	end
-	puts "done."
-
 end
-# Get a list of the generated files.
-backup_file_list = Dir.glob("#{backup_name}\.tgz\.*")
+# Get a list of the generated files
+backup_file_list = Dir.glob("#{backup_name}\.tgz*")
 
 ### Upload the backup file to Amazon S3
 print "   - uploading to amazon cloud... "
-AWS::S3::Base.establish_connection!(
-  :persistent        => false,
-  :access_key_id     => config['amazon']['access_key_id'],
-  :secret_access_key => config['amazon']['secret_access_key']
+
+s3 = RightAws::S3Interface.new(
+	config['amazon']['access_key_id'],
+	config['amazon']['secret_access_key'],
+	{
+		:server     => config['amazon']['server'],
+		:port 		=> config['amazon']['port'],
+		:protocol 	=> config['amazon']['protocol']
+	}
 )
-backups_bucket = AWS::S3::Bucket.find(config['amazon']['bucket'])
-unless backups_bucket
-	AWS::S3::Bucket.create(config['amazon']['bucket'])
-	backups_bucket = AWS::S3::Bucket.find(config['amazon']['bucket'])
+
+begin
+	# test for presence of the bucket
+	s3.bucket_location(config['amazon']['bucket'])
+rescue RightAws::AwsError => e
+	if e.message == 'AccessDenied: Access Denied'
+		puts "WARNING: access denied when checking bucket. Attempting to continue..."
+	else
+		# assume permissions to create the bucket
+		RightAws::S3::Bucket.create(s3, config['amazon']['bucket'])
+	end
 end
 
 current_file = nil
@@ -225,7 +218,7 @@ begin
 	# Check each file to see if it's uploaded
 	backup_file_list.each do |file|
 		current_file = file
-		AWS::S3::S3Object.find(current_file, config['amazon']['bucket'])
+		s3.head(config['amazon']['bucket'], current_file)
 		current_file = nil
 	end
 	### If this succeeds, the backup already exists.
@@ -233,7 +226,23 @@ begin
 	puts "There is already a backup called #{backup_name} in the bucket #{config['amazon']['bucket']}. Exiting."
 	exit 1
 
-rescue AWS::S3::NoSuchKey
+rescue RightAws::AwsError => e
+	okay_exception = if e.message.include?('404: Not Found')
+						# file not uploaded
+						true
+					elsif e.message.include?('403: Forbidden')
+						# assuming file exists but permission denied to read it
+						puts "There is already a backup called #{backup_name} in the bucket #{config['amazon']['bucket']}. Exiting."
+						exit 1
+					else
+						false
+					end
+	if !okay_exception
+		# not an expected exception
+		puts "Exception: #{e.inspect}"
+		raise e
+	end
+
 	files_to_upload = backup_file_list.clone
 	access_control = config['amazon']['access_control'] ? config['amazon']['access_control'] : :private
 
@@ -245,36 +254,22 @@ rescue AWS::S3::NoSuchKey
 	else
 		# if current_file is nil, all backup files already exist. Exit and do nothing.
 		puts "Backup files already uploaded. Exiting."
-		exit 1
+		exit 0
 	end
 
 	begin
 		files_to_upload.each do |file|
-			AWS::S3::S3Object.store(
-				file,
-				open(file),
+			s3.put(
 				config['amazon']['bucket'],
+				file,
+				File.open(file),
 				:content_type => 'application/x-compressed',
 				:access => access_control
 			)
 		end
-	rescue Errno::ECONNRESET
-		puts <<-END
-Connection reset by peer.
-
-Unable to push backup file #{backup_name} to Amazon S3 due to a connection reset. The fix for this is from <http://scie.nti.st/2008/3/14/amazon-s3-and-connection-reset-by-peer>:
-This most likely means you're running on Linux kernel 2.6.17 or higher with a TCP buffer size too large for your equipment to understand. To work around this issue, you will need to reconfigure your sysctl to decrease your maximum TCP window size. Put the following in /etc/sysctl.conf:
-\t# Workaround for TCP Window Scaling bugs in other ppl's equipment:
-\tnet.ipv4.tcp_wmem = 4096 16384 512000
-\tnet.ipv4.tcp_rmem = 4096 87380 512000
-
-Then run:
-\t$ sudo sysctl -p
-
-The last number in that group of three is the important one. If you're not getting any resets, increase it and your uploads/downloads will be faster. If you are getting resets, decrease it and it'll make the resets go away, but your throughput will be slower now.
-		END
-
-		exit 1
+	rescue Exception => e
+		puts "Exception: #{e.inspect}"
+		raise e
 	end
 end
 puts "done."
@@ -289,8 +284,9 @@ begin
 		exit 1
 	end
 
-rescue AWS::S3::NoSuchKey
-	puts "Backup file couldn't be uploaded to Amazon S3. Exiting."
+rescue Exception => e
+	puts "Exception: #{e.inspect}"
+	raise e
 	exit 1
 end
 

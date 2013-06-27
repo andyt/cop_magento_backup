@@ -9,6 +9,9 @@ amazon:
     bucket: your_app_backups
     secret_access_key: your_secret
     access_key_id: your_key_id
+    server: s3.amazonaws.com
+    port: 443
+    protocol: https
     access_control: !ruby/symbol private
 webserver: 
     username: your_ssh_username
