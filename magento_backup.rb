@@ -77,8 +77,8 @@ end
 
 STDOUT.sync = true
 
-if File.exists?("#{backup_name}.tgz.00")
-	puts "   - #{backup_name}.tgz.00 already exists. Skipping archive generation."
+if File.exists?("#{backup_name}.tgz")
+	puts "   - #{backup_name}.tgz already exists. Skipping archive generation."
 
 else
 
