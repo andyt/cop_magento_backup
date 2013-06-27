@@ -205,7 +205,7 @@ begin
 	# test for presence of the bucket
 	s3.bucket_location(config['amazon']['bucket'])
 rescue RightAws::AwsError => e
-	puts "Exception: #{e.inspect} (#{e.methods.inspect})"
+	puts "Exception: #{e.inspect} (#{e.message})"
 	raise e
 	# create the bucket
 	RightAws::S3::Bucket.create(s3, config['amazon']['bucket'])
