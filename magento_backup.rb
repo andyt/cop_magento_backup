@@ -205,10 +205,12 @@ begin
 	# test for presence of the bucket
 	s3.bucket_location(config['amazon']['bucket'])
 rescue RightAws::AwsError => e
-	puts "Exception: #{e.inspect} (#{e.message})"
-	raise e
-	# create the bucket
-	RightAws::S3::Bucket.create(s3, config['amazon']['bucket'])
+	if e.message == 'AccessDenied: Access Denied'
+		puts "WARNING: access denied when checking bucket. Attempting to continue..."
+	else
+		# assume permissions to create the bucket
+		RightAws::S3::Bucket.create(s3, config['amazon']['bucket'])
+	end
 end
 
 current_file = nil
@@ -224,9 +226,11 @@ begin
 	puts "There is already a backup called #{backup_name} in the bucket #{config['amazon']['bucket']}. Exiting."
 	exit 1
 
-rescue Exception => e
-	puts "Exception: #{e.inspect}"
-	raise e
+rescue RightAws::AwsError => e
+	#if e.message != 'AccessDenied: Access Denied'
+		puts "Exception: #{e.inspect}"
+		raise e
+	#end
 
 	files_to_upload = backup_file_list.clone
 	access_control = config['amazon']['access_control'] ? config['amazon']['access_control'] : :private
