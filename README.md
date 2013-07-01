@@ -22,7 +22,7 @@ This also requires the Amazon S3 ruby gem to be present.  Assuming you're using 
 
 If you're not using those tools, have sudo access and do this:
 
-		$ sudo gem install aws-s3
+		$ sudo gem install right_aws
 
 Back it up.
 -----------
@@ -36,6 +36,7 @@ To use it, drop your authentication vectors into a `magento_backup.yml` file to 
 		    password: your_password
 		    hostname: your_app.staging.copiousdev.com
 		    database: your_app_staging
+		    dump_arguments: --single-transaction -e
 		amazon:
 		    bucket: your_app_backups
 		    secret_access_key: your_secret
