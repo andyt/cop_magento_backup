@@ -58,7 +58,7 @@ tar_command = `which tar`.strip
 ssh_command = `which ssh`.strip
 nice_command = `which nice`.strip
 rsync_command = `which rsync`.strip
-mysqldump_command = `which mysqldump`.strip
+mysqldump_command = `#{ssh_command} \"#{db_ssh_root}\" \"which mysqldump\"`.strip
 rm_command = `which rm`.strip
 
 puts "Creating backup #{backup_name}..."
