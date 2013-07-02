@@ -244,7 +244,7 @@ rescue RightAws::AwsError => e
 	end
 
 	files_to_upload = backup_file_list.clone
-	access_control = config['amazon']['access_control'] ? config['amazon']['access_control'] : :private
+	access_control = config['amazon']['access_control'] ? config['amazon']['access_control'] : 'authenticated-read'
 
 	# prune files_to_upload for each existing file
 	if current_file # if this is not nil, an exception prevented it, indicating the file does not exist. This is the first file to upload.
@@ -264,7 +264,7 @@ rescue RightAws::AwsError => e
 				file,
 				File.open(file),
 				:content_type => 'application/x-compressed',
-				:access => access_control
+				:'x-amz-grant-read-acp' => 'true'
 			)
 		end
 	rescue Exception => e
