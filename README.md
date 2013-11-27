@@ -1,7 +1,7 @@
 Magento Backup
 ==============
 
-This is a COPIOUS script to backup a Magento instance.  It pulls uploaded media and an SQL dump, compresses them, and copies them to an Amazon S3 bucket.
+This is a COPIOUS script to backup a Magento instance.  It pulls uploaded media and an SQL dump, compresses them, and copies them to an Amazon S3 bucket. The intent is to provide Magento operators with the ability to do a full “point in time” restore.
 
 Prerequisites
 -------------
