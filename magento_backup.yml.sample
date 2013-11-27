@@ -20,6 +20,7 @@ webserver:
     hostname: your_app.staging.example.com
     use_maintenance_flag: false
     app_root: /var/www/your_app-staging
+    # media_path is optional; omitting it will disable asset backups
     media_path: /var/www/your_app-staging/media
     # Array of paths relative to app_root
     paths_to_exclude:

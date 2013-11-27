@@ -66,9 +66,15 @@ unless system("mkdir -p #{backup_name}")
 	print "Couldn't create backup directory at #{backup_name}"
 	exit 1
 end
-unless system("mkdir -p #{backup_name}/assets/")
-	print "Couldn't create assets backup directory at #{backup_name}/assets"
-	exit 1
+# only back up assets if the media path is defined
+# NOTE: remove from magento_backup.yml to disable asset backups
+if config['webserver']['media_path'].present?
+	unless system("mkdir -p #{backup_name}/assets/")
+		print "Couldn't create assets backup directory at #{backup_name}/assets"
+		exit 1
+	end
+else
+	print "Skipping asset backup. (media_path not defined in #{options[:config_file]})"
 end
 unless system("mkdir -p #{backup_name}/database/")
 	print "Couldn't create database backup directory at #{backup_name}/database"
